@@ -25,15 +25,25 @@ router.get('/', (req, res) => {
 
 // Endpoint POST untuk menambahkan tamu baru
 router.post('/', (req, res) => {
-    const { name, message } = req.body;
+    const { name, email, address, message } = req.body;
 
-    // Validasi input
-    if (!name || !message) {
-        return res.status(400).json({ error: 'Nama dan pesan harus diisi.' });
+    // Validasi input di back-end
+    if (!name || name.trim().length < 3) {
+        return res.status(400).json({ error: 'Nama harus diisi dan minimal 3 karakter.' });
+    }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailPattern.test(email)) {
+        return res.status(400).json({ error: 'Email tidak valid.' });
+    }
+    if (!address || address.trim().length < 5) {
+        return res.status(400).json({ error: 'Alamat harus diisi dan minimal 5 karakter.' });
+    }
+    if (!message || message.trim().length < 5) {
+        return res.status(400).json({ error: 'Pesan harus diisi dan minimal 5 karakter.' });
     }
 
     const guestBook = readGuestBookData();
-    const newGuest = { id: Date.now(), name, message };
+    const newGuest = { id: Date.now(), name, email, address, message };
     guestBook.push(newGuest);
     writeGuestBookData(guestBook);
 
@@ -43,7 +53,7 @@ router.post('/', (req, res) => {
 // Endpoint PUT untuk memperbarui tamu berdasarkan ID
 router.put('/:id', (req, res) => {
     const guestId = parseInt(req.params.id);
-    const { name, message } = req.body;
+    const { name, email, address, message } = req.body;
 
     const guestBook = readGuestBookData();
     const guestIndex = guestBook.findIndex(guest => guest.id === guestId);
@@ -52,8 +62,25 @@ router.put('/:id', (req, res) => {
         return res.status(404).json({ error: 'Tamu tidak ditemukan.' });
     }
 
+    // Validasi input di back-end
+    if (name && name.trim().length < 3) {
+        return res.status(400).json({ error: 'Nama harus minimal 3 karakter.' });
+    }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailPattern.test(email)) {
+        return res.status(400).json({ error: 'Email tidak valid.' });
+    }
+    if (address && address.trim().length < 5) {
+        return res.status(400).json({ error: 'Alamat harus minimal 5 karakter.' });
+    }
+    if (message && message.trim().length < 5) {
+        return res.status(400).json({ error: 'Pesan harus minimal 5 karakter.' });
+    }
+
     // Update data tamu
     if (name) guestBook[guestIndex].name = name;
+    if (email) guestBook[guestIndex].email = email;
+    if (address) guestBook[guestIndex].address = address;
     if (message) guestBook[guestIndex].message = message;
 
     writeGuestBookData(guestBook);
